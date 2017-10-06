@@ -11,7 +11,15 @@ angular.module('app').directive('appHeadBar', [function(){
     link: function($scope){
       $scope.back = function(){
         window.history.back();
-      }
+      };
+
+      /*
+      //receive the broadcast from positionClass.js
+      $scope.$on('abc', function(event, data){
+        console.log(event, data);
+      });*/
+
+
     }
   };
 }]);

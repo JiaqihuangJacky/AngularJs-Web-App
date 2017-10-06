@@ -1,22 +1,21 @@
 'use strict';
 angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', function(dict, $http, $scope){
-  $scope.name = '';
-  $scope.search = function() {
-    $http.get('data/positionList.json?name='+$scope.name).success(function(resp) {
+$scope.search = function(){
+    $http.get('data/positionList.json').success(function(resp) {
       $scope.positionList = resp;
     });
   };
   $scope.search();
   $scope.sheet = {};
   $scope.tabList = [{
-    id: 'city',
-    name: '城市'
-  }, {
-    id: 'salary',
-    name: '薪水'
-  }, {
+    id:'city',
+    name:'city'
+  },{
+    id:'salary',
+    name:'wage'
+  },{
     id: 'scale',
-    name: '公司规模'
+    name: 'Company size'
   }];
   $scope.filterObj = {};
   var tabId = '';
@@ -24,7 +23,9 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
     tabId = id;
     $scope.sheet.list = dict[id];
     $scope.sheet.visible = true;
+
   };
+
   $scope.sClick = function(id,name) {
     if(id) {
       angular.forEach($scope.tabList, function(item){
@@ -32,8 +33,10 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
           item.name = name;
         }
       });
-      $scope.filterObj[tabId + 'Id'] = id;
+    // used for the filter
+     $scope.filterObj[tabId + 'Id'] = id;
     } else {
+      //not used the delete the filter
       delete $scope.filterObj[tabId + 'Id'];
       angular.forEach($scope.tabList, function(item){
         if(item.id===tabId) {
@@ -53,4 +56,5 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
       });
     }
   }
+
 }]);
