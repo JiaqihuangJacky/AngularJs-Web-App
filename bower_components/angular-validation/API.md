@@ -37,6 +37,29 @@ API
 <input type="text" name="number" ng-model="form.number" validator="number"/>
 ```
 
+### **Use Custom Default Valid/Invalid Message** <br/>
+You can customize the default valid/invalid message that will be automatically placed next to your input element.
+
+```html
+<script>
+    $validationProvider.setDefaultMsg({
+        minlength: {
+            error: function (element, attrs, param) {
+                return 'A minimum of ' + param + ' characters is required.';
+            }
+        }
+        , maxlength: {
+            error: function (element, attrs, param) {
+                return 'A maximum of ' + param + ' characters is required.';
+            }
+        }
+    });
+</script>
+
+<label>Username</label>
+<input type="text" name="username" ng-model="form.username" validator="minlength=5"/>
+```
+
 ### **Use a custom Valid Message** <br/>
 You can also add a custom validation message by using `message-id` attribute. It allows you to place a valid/invalid message wherever you want, a target element must specify an `id` attribute that matches with a value of the `message-id`.
 
@@ -148,6 +171,9 @@ You can also add a `validation-group` directive to group many elements into a gr
 
 <label>Huei (Custom setup the new validator - Function)</label>
 <input type="text" name="huei" ng-model="form.huei" validator="huei"/>
+
+<label>Kuaisheng (Custom setup the new validator - Function)</label>
+<input type="text" name="kuaisheng" ng-model="form.kuaisheng" validator="kuaisheng"/>
 ```
 
 ```javascript
@@ -187,6 +213,37 @@ angular.module('yourApp', ['validation'])
                     success: 'Thanks!'
                 }
             });
+
+        // Setup `kuaisheng` validation
+        $validationProvider
+            .setExpression({
+                kuaisheng: function(value, scope, element, attrs, param) {
+                  var errorStr = [
+                    'errorStr1',
+                    'errorStr2'
+                  ];
+                  var len = errorStr.length;
+                  for (var i = len - 1; i >= 0; i--) {
+                    if (value.indexOf(errorStr[i]) > -1) {
+                      return {
+                        result: false,
+                        message: 'input should not include ' + errorStr[i]
+                      };
+                    }
+                  }
+                  return {
+                    result: true,
+                    message: ''
+                  };
+                }
+            })
+            .setDefaultMsg({
+                kuaisheng: {
+                  error: 'valid is error',
+                  success: 'Thanks!'
+                }
+            });
+
     }]);
 ```
 

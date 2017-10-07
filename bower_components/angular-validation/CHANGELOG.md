@@ -1,10 +1,34 @@
+31 May 2017 v1.4.4
+===
+
+**Fix**
+
+[402752c](https://github.com/hueitan/angular-validation/commit/402752cebfe1250e8a438ffefe9ece17554a215d) Executes $apply() only if doesn't have another in execution (blur)
+
+**Improvement**
+
+[#198](https://github.com/hueitan/angular-validation/commit/fa1ec0dbe0628749990a09fb325d6517f10e16a4) Added support for dynamic default messages using functions.
+
+24 Jan 2017 v1.4.3
+===
+
+**Fix**
+
+[#257](https://github.com/huei90/angular-validation/commit/0640de71ab045037b0fba86fd0a278e748d67786) Fix for initialValidity set up
+
+**Improvement**
+
+[#231](https://github.com/huei90/angular-validation/pull/231) improve valid result, you can set success or error message when valid
+<br/>[#266](https://github.com/huei90/angular-validation/pull/266) Observe validator changes
+<br/>[#271](https://github.com/huei90/angular-validation/pull/271) Using model value
+
 22 Jul 2016 v1.4.2
 ===
 
 **Fix**
 
 [#206](https://github.com/huei90/angular-validation/pull/206) Fixed calls for validCallback/invalidCallback
-[#215](https://github.com/huei90/angular-validation/pull/215) Fix validation-group not working properly
+<br/>[#215](https://github.com/huei90/angular-validation/pull/215) Fix validation-group not working properly
 
 **Improvement**
 
