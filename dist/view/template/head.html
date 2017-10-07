@@ -1,4 +1,5 @@
 <div class="head">
-  <span class="text">10 s to get jobs</span>
-  <button class="custom f-r">To custom</button>
+  <span ng-hide="name" class="text">10s Get Jobs</span>
+  <button ng-hide="name" class="custom f-r" ui-sref="login">Login</button>
+  <span ng-show="name" class="f-r text" ng-bind="'Hi,'+name"></span>
 </div>

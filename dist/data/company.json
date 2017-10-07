@@ -1,18 +1,18 @@
 {
    "id":"c1",
    "imageUrl":"/image/company-1.png",
-   "name":"Muke",
-   "industry":"移动互联网",
-   "state":"A轮",
-   "people":"50-150人",
+   "name":"Yelp",
+   "industry":"A internel",
+   "state":"A state",
+   "people":"50-150 people",
    "positionClass":[
       {
          "id":"jishu",
-         "name":"技术",
+         "name":"Tech developer",
          "positionList":[
             {
                "id":"p1",
-               "name":"IOS前端工程师",
+               "name":"IOS developer",
                "createdDate":"2016-04-16 23:30",
                "salary":"15k-25k"
             }
@@ -20,13 +20,13 @@
       },
       {
          "id":"yunying",
-         "name":"运营",
+         "name":"Yelp",
          "positionList":[
             {
                "id":"y1",
-               "name":"运营总监",
+               "name":"Product Manageer",
                "createdDate":"2016-04-10 13:30",
-               "salary":"25k以上"
+               "salary":"25k and more"
             }
          ]
       }

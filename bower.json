@@ -21,6 +21,11 @@
   "dependencies": {
     "angular": "^1.6.6",
     "angular-ui-router": "0.4",
-    "angular-cookies": "1.5"
+    "angular-cookies": "1.5",
+    "angular-validation": "^1.4.4"
+  },
+  "resolutions": {
+    "angular": "^1.0.8",
+    "angular-validation": "^1.4.4"
   }
 }
