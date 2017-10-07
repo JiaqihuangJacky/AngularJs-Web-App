@@ -1,16 +1,16 @@
 [{
   "id": "",
-  "name": "不限"
+  "name": "Unlimited"
 }, {
   "id": "s1",
-  "name": "少于50人"
+  "name": "less than 50 p"
 }, {
   "id": "s2",
-  "name": "50~100人"
+  "name": "50~100 p"
 }, {
   "id": "s3",
-  "name": "100~500人"
+  "name": "100~500 p"
 }, {
   "id": "s4",
-  "name": "500人以上"
+  "name": "500 p above"
 }]

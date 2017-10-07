@@ -1,6 +1,57 @@
 'use strict';
 
-angular.module('app', ['ui.router']);
+angular.module('app', ['ui.router', 'ngCookies', 'validation']);
+
+'use strict';
+angular.module('app').value('dict', {}).run(['dict', '$http', function(dict, $http){
+  $http.get('data/city.json').success(function(resp){
+    dict.city = resp;
+  });
+  $http.get('data/salary.json').success(function(resp){
+    dict.salary = resp;
+  });
+  $http.get('data/scale.json').success(function(resp){
+    dict.scale = resp;
+  });
+}]);
+
+'use strict';
+/*
+since we do not have back end we used this file to deal with post and get request
+*/
+angular.module('app').config(['$provide', function($provide){
+  $provide.decorator('$http', ['$delegate', '$q', function($delegate, $q){
+    //modifres post request
+    //change it to get request
+    //and send the request back
+    $delegate.post = function(url, data, config) {
+      //defer of time
+      var def = $q.defer();
+      //send the get request if success
+      $delegate.get(url).success(function(resp) {
+        //resolve the confilt
+        def.resolve(resp);
+      }).error(function(err) {
+        def.reject(err);
+      });
+      return {
+        //parameter is cd
+        //finish the result
+        success: function(cb){
+          def.promise.then(cb);
+        },
+        //catch the error
+        //return errorr
+        error: function(cb) {
+          def.promise.then(null, cb);
+        }
+      }
+    }
+    //return delegate as ret value
+    return $delegate;
+  }]);
+}]);
+
 'use strict';
 
 angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
@@ -45,11 +96,47 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
 }])
 
 'use strict';
+angular.module('app').config(['$validationProvider', function($validationProvider) {
+  var expression = {
+    phone: /^1[\d]{10}$/,
+    password: function(value) {
+      var str = value + ''
+      return str.length > 5;
+    },
+    required: function(value) {
+      return !!value;
+    }
+  };
+  var defaultMsg = {
+    phone: {
+      success: '',
+      error: '必须是11位手机号'
+    },
+    password: {
+      success: '',
+      error: '长度至少6位'
+    },
+    required: {
+      success: '',
+      error: '不能为空'
+    }
+  };
+  $validationProvider.setExpression(expression).setDefaultMsg(defaultMsg);
+}]);
+
+'use strict';
 angular.module('app').controller('companyCtrl', ['$http', '$state', '$scope', function($http, $state, $scope){
   $http.get('data/company.json?id='+$state.params.id).success(function(resp){
     $scope.company = resp;
-    console.log(resp);
+    //$scope.$broadcast('abc', {id:1});
   });
+  /*
+  $scope.$on('cba', function(event, data){
+    console.log(event, data);
+  }); */
+
+
+
 }]);
 
 'use strict';
@@ -94,37 +181,93 @@ angular.module('app').controller('meCtrl', ['$state', 'cache', '$http', '$scope'
 }]);
 
 'use strict';
-angular.module('app').controller('positionCtrl', ['$q','$http', '$state', '$scope', function($q,$http, $state, $scope){
-  $scope.isLogin = false;
+angular.module('app').controller('positionCtrl', ['$log', '$q', '$http', '$state', '$scope', 'cache', function($log, $q, $http, $state, $scope, cache){
+  $scope.isLogin = !!cache.get('name');
+  $scope.message = $scope.isLogin?'Send resume':'Login in';
   function getPosition() {
     var def = $q.defer();
-    $http.get('data/position.json?id='+$state.params.id).success(function(resp){
+    $http.get('data/position.json', {
+      params: {
+        id: $state.params.id
+      }
+    }).success(function(resp) {
       $scope.position = resp;
+      if(resp.posted) {
+        $scope.message = 'Has Sent';
+      }
       def.resolve(resp);
-      console.log(resp);
-    }).error(function(err){
+    }).error(function(err) {
       def.reject(err);
     });
-      return def.promise;
+    return def.promise;
   }
-
   function getCompany(id) {
     $http.get('data/company.json?id='+id).success(function(resp){
       $scope.company = resp;
-      })
+    })
   }
-    getPosition().then(function(obj){
-     getCompany(obj.companyId);
-   });
+  getPosition().then(function(obj){
+    getCompany(obj.companyId);
+  });
+  $scope.go = function() {
+    if($scope.message !== 'Has Sent') {
+      if($scope.isLogin) {
+        $http.post('data/handle.json', {
+          id: $scope.position.id
+        }).success(function(resp) {
+          $log.info(resp);
+          $scope.message = 'Has Sent';
+        });
+      } else {
+        $state.go('login');
+      }
+    }
+  }
+}]);
+
+'use strict';
+angular.module('app').controller('postCtrl', ['$http', '$scope', function($http, $scope){
+  $scope.tabList = [{
+    id: 'all',
+    name: 'All'
+  }, {
+    id: 'pass',
+    name: 'Interview'
+  }, {
+    id: 'fail',
+    name: 'No fit'
+  }];
+  $http.get('data/myPost.json').success(function(res){
+    $scope.positionList = res;
+  });
+  $scope.filterObj = {};
+  $scope.tClick = function(id, name) {
+    switch (id) {
+      case 'all':
+        delete $scope.filterObj.state;
+        break;
+      case 'pass':
+        $scope.filterObj.state = '1';
+        break;
+      case 'fail':
+        $scope.filterObj.state = '-1';
+        break;
+      default:
+
+    }
+  }
 }]);
 
 'use strict';
 angular.module('app').controller('registerCtrl', ['$interval', '$http', '$scope', '$state', function($interval, $http, $scope, $state){
-  $scope.submit = function() {
+  $scope.submit = function(){
     $http.post('data/regist.json',$scope.user).success(function(resp){
-      $state.go('login');
+    console.log(resp);
+    //register successfuly using
+    $state.go('login');
     });
-  };
+  }
+  //each time successfully click we send
   var count = 60;
   $scope.send = function() {
     $http.get('data/code.json').success(function(resp){
@@ -147,23 +290,22 @@ angular.module('app').controller('registerCtrl', ['$interval', '$http', '$scope'
 
 'use strict';
 angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', function(dict, $http, $scope){
-  $scope.name = '';
-  $scope.search = function() {
-    $http.get('data/positionList.json?name='+$scope.name).success(function(resp) {
+$scope.search = function(){
+    $http.get('data/positionList.json').success(function(resp) {
       $scope.positionList = resp;
     });
   };
   $scope.search();
   $scope.sheet = {};
   $scope.tabList = [{
-    id: 'city',
-    name: '城市'
-  }, {
-    id: 'salary',
-    name: '薪水'
-  }, {
+    id:'city',
+    name:'City'
+  },{
+    id:'salary',
+    name:'Wage'
+  },{
     id: 'scale',
-    name: '公司规模'
+    name: 'Company-Size'
   }];
   $scope.filterObj = {};
   var tabId = '';
@@ -171,7 +313,9 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
     tabId = id;
     $scope.sheet.list = dict[id];
     $scope.sheet.visible = true;
+
   };
+
   $scope.sClick = function(id,name) {
     if(id) {
       angular.forEach($scope.tabList, function(item){
@@ -179,8 +323,10 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
           item.name = name;
         }
       });
-      $scope.filterObj[tabId + 'Id'] = id;
+    // used for the filter
+     $scope.filterObj[tabId + 'Id'] = id;
     } else {
+      //not used the delete the filter
       delete $scope.filterObj[tabId + 'Id'];
       angular.forEach($scope.tabList, function(item){
         if(item.id===tabId) {
@@ -200,6 +346,7 @@ angular.module('app').controller('searchCtrl', ['dict', '$http', '$scope', funct
       });
     }
   }
+
 }]);
 
 'use strict';
@@ -225,12 +372,14 @@ angular.module('app').directive('appFoot', [function(){
 
 'use strict';
 //using appHead since html does not care it
-angular.module('app').directive('appHead', [function(){
+angular.module('app').directive('appHead', ['cache', function(cache){
   return {
     restrict: 'A', //return target, using attribute to use the property
     replace: true, //replace the value
     templateUrl: 'view/template/head.html', //tempalte location
-
+    link: function($scope) {
+      $scope.name = cache.get('name') || '';
+    }
   };
 }]);
 
@@ -247,7 +396,15 @@ angular.module('app').directive('appHeadBar', [function(){
     link: function($scope){
       $scope.back = function(){
         window.history.back();
-      }
+      };
+
+      /*
+      //receive the broadcast from positionClass.js
+      $scope.$on('abc', function(event, data){
+        console.log(event, data);
+      });*/
+
+
     }
   };
 }]);
@@ -266,6 +423,13 @@ angular.module('app').directive('appPositionClass', [function(){
           $scope.positionList = $scope.com.positionClass[idx].positionList;
           $scope.isActive = idx;
         }
+        //wait until come send back the here
+        //as long as the first value is here
+        //then we can init the first property
+        //watch will make the run time slow
+        $scope.$watch('com', function(newVal){
+          if(newVal) $scope.showPositionList(0);
+        });
       }
     };
 }]);
@@ -302,13 +466,95 @@ angular.module("app").directive('appPositionInfo', ['$http', function($http){
 }]);
 
 'use strict';
-angular.module('app').directive('appPositionList', [function(){
+angular.module('app').directive('appPositionList', ['$http', function($http){
   return {
     restrict: 'A',
     replace: true,
     templateUrl: 'view/template/positionList.html',
-    scope:{
-      data: '='
+    scope: {
+      data: '=',
+      filterObj: '=',
+      isFavorite: '='
+    },
+    link: function($scope) {
+      $scope.select = function(item) {
+        $http.post('data/favorite.json', {
+          id: item.id,
+          select: !item.select
+        }).success(function(resp){
+          item.select = !item.select;
+        })
+      };
     }
   };
+}]);
+
+'use strict';
+angular.module('app').directive('appSheet', [function(){
+  return {
+    restrict: 'A',
+    replace: true,
+    scope:{
+      list: '=',
+      visible: '=',
+      select: '&' 
+    },
+    templateUrl: 'view/template/sheet.html'
+  };
+}]);
+
+'use strict';
+angular.module('app').directive('appTab', [function(){
+  return {
+    restrict: 'A',
+    replace: true,
+    scope: {
+      list: '=',
+      tabClick: '&'
+    },
+    templateUrl: 'view/template/tab.html',
+    link: function($scope) {
+      $scope.click = function(tab) {
+        $scope.selectId = tab.id;
+        $scope.tabClick(tab);
+      };
+    }
+  };
+}]);
+
+'use strict';
+angular.module('app').filter('filterByObj', [function(){
+  return function(list, obj) {
+    var result = [];
+    angular.forEach(list, function(item){
+      //default variables
+      var isEqual = true;
+      for(var e in obj){
+        //check if the item are the same
+        if(item[e]!==obj[e]) {
+          //is not equal, then change it to false
+          isEqual = false;
+        }
+      }
+      //if we found equal, then we push it to the results
+      if(isEqual) {
+        result.push(item);
+      }
+    });
+    //return a list of result
+    return result;
+  };
+}]);
+
+'use strict';
+angular.module('app').service('cache', ['$cookies', function($cookies){
+    this.put = function(key, value){
+      $cookies.put(key, value);
+    };
+    this.get = function(key) {
+      return $cookies.get(key);
+    };
+    this.remove = function(key) {
+      $cookies.remove(key);
+    };
 }]);

@@ -398,7 +398,7 @@ angular.module('validation.directive', ['validation.provider']);
      * @param ctrl
      * @returns {}
      */
-    var validFunc = function(element, validMessage, validation, scope, ctrl, attrs) {
+    var validFunc = function(element, validMessage, validation, scope, ctrl, attrs, param) {
       var messageToShow = validMessage || $validationProvider.getDefaultMsg(validation).success;
       var validCallback = $parse(attrs.validCallback);
       var messageId = attrs.messageId;
@@ -411,6 +411,8 @@ angular.module('validation.directive', ['validation.provider']);
       if (element.attr('no-validation-message')) {
         messageElem.css('display', 'none');
       } else if ($validationProvider.showSuccessMessage && messageToShow) {
+        messageToShow = angular.isFunction(messageToShow) ? messageToShow(element, attrs, param) : messageToShow;
+
         messageElem.html('').append($compile($validationProvider.getSuccessHTML(messageToShow, element, attrs))(scope));
         messageElem.css('display', '');
       } else {
@@ -436,7 +438,7 @@ angular.module('validation.directive', ['validation.provider']);
      * @param ctrl
      * @returns {}
      */
-    var invalidFunc = function(element, validMessage, validation, scope, ctrl, attrs) {
+    var invalidFunc = function(element, validMessage, validation, scope, ctrl, attrs, param) {
       var messageToShow = validMessage || $validationProvider.getDefaultMsg(validation).error;
       var invalidCallback = $parse(attrs.invalidCallback);
       var messageId = attrs.messageId;
@@ -449,6 +451,8 @@ angular.module('validation.directive', ['validation.provider']);
       if (element.attr('no-validation-message')) {
         messageElem.css('display', 'none');
       } else if ($validationProvider.showErrorMessage && messageToShow) {
+        messageToShow = angular.isFunction(messageToShow) ? messageToShow(element, attrs, param) : messageToShow;
+
         messageElem.html('').append($compile($validationProvider.getErrorHTML(messageToShow, element, attrs))(scope));
         messageElem.css('display', '');
       } else {
@@ -505,6 +509,32 @@ angular.module('validation.directive', ['validation.provider']);
      */
     var focusElements = {};
 
+    /**
+     * Get Validation Result Object
+     * @param data
+     * @returns {
+     *    result: Boolean, // is success or error
+     *    message: String  // tips
+     * }
+     */
+    function getResultObj(data) {
+      var res = {};
+      if (data && data.length > 0) {
+        res = data[0];
+        if (!angular.isObject(res)) {
+          res = {
+            result: res,
+            message: ''
+          };
+        }
+      } else {
+        res = {
+          result: false,
+          message: ''
+        };
+      }
+      return res;
+    }
 
     /**
      * Check Validation with Function or RegExp
@@ -528,16 +558,16 @@ angular.module('validation.directive', ['validation.provider']);
       var expression = $validationProvider.getExpression(validator);
       var validationGroup = attrs.validationGroup;
       var valid = {
-        success: function() {
-          validFunc(element, attrs[successMessage], validator, scope, ctrl, attrs);
+        success: function(message) {
+          validFunc(element, message || attrs[successMessage], validator, scope, ctrl, attrs, validatorParam);
           if (leftValidation.length) {
             return checkValidation(scope, element, attrs, ctrl, leftValidation, value);
           } else {
             return true;
           }
         },
-        error: function() {
-          return invalidFunc(element, attrs[errorMessage], validator, scope, ctrl, attrs);
+        error: function(message) {
+          return invalidFunc(element, message || attrs[errorMessage], validator, scope, ctrl, attrs, validatorParam);
         }
       };
 
@@ -550,12 +580,14 @@ angular.module('validation.directive', ['validation.provider']);
       if (expression.constructor === Function) {
         return $q.all([$validationProvider.getExpression(validator)(value, scope, element, attrs, validatorParam)])
           .then(function(data) {
-            if (data && data.length > 0 && data[0]) {
+            var resultObj = getResultObj(data);
+            var message = resultObj.message;
+            if (resultObj.result) {
               if (validationGroup) {
                 groups[validationGroup][ctrl.$name] = true;
                 setValidationGroup(scope, validationGroup, true);
               }
-              return valid.success();
+              return valid.success(message);
             } else if (validationGroup) {
               groups[validationGroup][ctrl.$name] = false;
 
@@ -565,9 +597,9 @@ angular.module('validation.directive', ['validation.provider']);
                 setValidationGroup(scope, validationGroup, true);
               } else {
                 setValidationGroup(scope, validationGroup, false);
-                return valid.error();
+                return valid.error(message);
               }
-            } else return valid.error();
+            } else return valid.error(message);
           }, function() {
             return valid.error();
           });
@@ -617,6 +649,7 @@ angular.module('validation.directive', ['validation.provider']);
         /**
          * All attributes
          */
+        var useViewValue = attrs.useViewValue !== 'false';
         var validator = attrs.validator;
         var messageId = attrs.messageId;
         var validationGroup = attrs.validationGroup;
@@ -647,17 +680,24 @@ angular.module('validation.directive', ['validation.provider']);
         var uid = ctrl.validationId = guid();
 
         /**
-         * to have avalue to rollback to
+         * to have a value to rollback to
          */
         var originalViewValue = null;
 
         /**
          * Set initial validity to undefined if no boolean value is transmitted
          */
-        var initialValidity;
-        if (typeof scope.initialValidity === 'boolean') {
-          initialValidity = scope.initialValidity;
+        var initialValidity = void 0;
+        if (typeof attrs.initialValidity === 'boolean') {
+          initialValidity = attrs.initialValidity;
         }
+
+        /**
+         * Observe validator changes in order to allow dynamically change it
+         */
+        attrs.$observe('validator', function(value) {
+          validation = value.split(',');
+        });
 
         /**
          * Set up groups object in order to keep track validation of elements
@@ -711,7 +751,7 @@ angular.module('validation.directive', ['validation.provider']);
          * Click submit form, check the validity when submit
          */
         scope.$on(ctrl.$name + 'submit-' + uid, function(event, index) {
-          var value = ctrl.$viewValue;
+          var value = useViewValue ? ctrl.$viewValue : ctrl.$modelValue;
           var isValid = false;
 
           isValid = checkValidation(scope, element, attrs, ctrl, validation, value);
@@ -760,9 +800,14 @@ angular.module('validation.directive', ['validation.provider']);
         if (validMethod === 'blur') {
           element.bind('blur', function() {
             var value = scope.$eval(ngModel);
-            scope.$apply(function() {
+
+            if (scope.$root.$$phase !== '$apply') {
+              scope.$apply(function() {
+                checkValidation(scope, element, attrs, ctrl, validation, value);
+              });
+            } else {
               checkValidation(scope, element, attrs, ctrl, validation, value);
-            });
+            }
           });
 
           return;
