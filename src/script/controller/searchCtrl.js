@@ -9,13 +9,13 @@ $scope.search = function(){
   $scope.sheet = {};
   $scope.tabList = [{
     id:'city',
-    name:'city'
+    name:'City'
   },{
     id:'salary',
-    name:'wage'
+    name:'Wage'
   },{
     id: 'scale',
-    name: 'Company size'
+    name: 'Company-Size'
   }];
   $scope.filterObj = {};
   var tabId = '';

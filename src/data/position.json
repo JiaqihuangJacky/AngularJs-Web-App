@@ -1,19 +1,19 @@
 {
    "id":"p3",
    "imageUrl":"/image/company-3.png",
-   "name":"销售",
+   "name":"Sell",
    "companyId":"c3",
-   "companyName":"千度",
+   "companyName": "Cisco",
    "cityId":"c1",
-   "cityName":"上海",
+   "cityName": "Shanghai",
    "scaleId":"s3",
-   "scaleName":"500人以上",
+   "scaleName":"500 p",
    "industryId":"i1",
-   "industryName":"互联网",
+   "industryName": "Internet",
    "salaryId":"s2",
    "salaryName":"3k-5k",
-   "experience":"1-3年",
-   "education":"专科",
-   "benefit":"成长空间大",
-   "description":"岗位职责：\n1.销售产品；..."
+   "experience":"1-3 years",
+   "education": "Undergrad",
+   "benefit": "Stable development",
+   "description": "Job Duties：\n1.Sellin Products；..."
 }

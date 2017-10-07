@@ -2,13 +2,13 @@
 angular.module('app').controller('postCtrl', ['$http', '$scope', function($http, $scope){
   $scope.tabList = [{
     id: 'all',
-    name: '全部'
+    name: 'All'
   }, {
     id: 'pass',
-    name: '面试邀请'
+    name: 'Interview'
   }, {
     id: 'fail',
-    name: '不合适'
+    name: 'No fit'
   }];
   $http.get('data/myPost.json').success(function(res){
     $scope.positionList = res;

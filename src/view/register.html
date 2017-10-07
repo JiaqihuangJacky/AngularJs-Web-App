@@ -10,7 +10,7 @@
     </div>
     <div class="message-wrap ta-l p-r">
       <input name = "code" validator="required" ng-model="user.code" class="message-box" placeholder="Message" type="text">
-      <span class="message f-r {{time?'disabled':''}}" ng-click="time?1==1:send();" ng-bind="time?time:'发送短信'"></span>
+      <span class="message f-r {{time?'disabled':''}}" ng-click="time?1==1:send();" ng-bind="time?time:'Send message'"></span>
       <div class="clear"></div>
     </div>
     <button class="login-btn" ui-sref="login">Login</button>
